@@ -5,19 +5,19 @@ This ROS package is Driver for CHT-10 laser ranging sensor of LAX.
 
 ### Published Topics
 
- */range (sensor_msgs/Range)
-  *Provides range reading.
+ * /range (sensor_msgs/Range)
+   * Provides range reading.
 
 ### Parameters
 
- *serialNumber (str, default:"/dev/ttyUSB0")
-  *The device path to open. 
+ * serialNumber (str, default:"/dev/ttyUSB0")
+   * The device path to open. 
 
- *frame_id (str, default:"laser")
-  *Frame id for sensor.
+ * frame_id (str, default:"laser")
+   * Frame id for sensor.
 
- *baudRate (int, default:"115200")
-  *baud rate for sensor.
+ * baudRate (int, default:"115200")
+   * baud rate for sensor.
 
 ## Compile
 
