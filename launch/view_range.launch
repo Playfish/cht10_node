@@ -1,0 +1,6 @@
+<!--
+  Used for visualising CHT-10 in action.  
+  
+  It requires standalone.launch.
+ -->
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find cht10_node)/rviz/cht10.rviz" />

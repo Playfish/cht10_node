@@ -1,0 +1,11 @@
+<!-- Example/standalone launcher for cht10 serial func -->
+
+<launch>
+  <node pkg="nodelet" type="nodelet" name="cht10_serial_manager"  args="manager"/>
+  <node pkg="nodelet" type="nodelet" name="cht10_serial_func" args="load cht10_seiral_func/Cht10Func cht10_serial_manager">
+    <param name="baudRate" type="int" value="115200"/>
+	<param name="serialNumber" type="string" value="/dev/ttyUSB0"/>
+    <param name="frame_id" type="string" value="laser"/>
+    <remap from="/cht10_serial_func/range" to="/range"/>
+  </node>
+</launch>
