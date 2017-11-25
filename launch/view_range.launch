@@ -3,4 +3,7 @@
   
   It requires standalone.launch.
  -->
-<node name="rviz" pkg="rviz" type="rviz" args="-d $(find cht10_node)/rviz/cht10.rviz" />
+<launch>
+  <include file="$(find cht10_node)/launch/standalone.launch"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cht10_node)/rviz/cht10.rviz" />
+</launch>
