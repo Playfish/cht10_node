@@ -1,7 +1,7 @@
 # cht10_node
 
 ## Description
-This ROS package is Driver for CHT-10 laser ranging sensor of LAX.
+This ROS2 package is Driver for CHT-10 laser ranging sensor of LAX.
 
 ### Published Topics
 
@@ -21,23 +21,21 @@ This ROS package is Driver for CHT-10 laser ranging sensor of LAX.
 
 ## Compile
 
-For compile this package you should in your ``catkin_ws``, and typing:
+For compile this package you should in your ``ros2_ws``, and typing:
 
 ```
-cd <your_catkin_ws>/src
+cd <ros2_ws>/src
 git clone https://github.com/Playfish/cht10_node
+cd cht10_node
+git checkout ros2
 cd ..
-catkin_make
+ament build src/cht10_node
 ```
 
 ## Usage
 
 For using this package you should enter following command:
 ```
-roslaunch cht10_node standalone.launch
+ros2 run cht10_node cht10_node_ros
 ```
 
-For view typing:
-```
-roslaunch cht10_node view_range.launch
-```
