@@ -24,6 +24,7 @@ ament_target_dependencies(cht10
   "std_msgs"
 )
 
+# main node
 add_executable(cht10_node_ros src/cht10_node_ros.cpp)
 ament_target_dependencies(cht10_node_ros
   "rclcpp"
@@ -32,6 +33,22 @@ ament_target_dependencies(cht10_node_ros
 )
 target_link_libraries(cht10_node_ros cht10)
 
+## Test node
+add_executable(test_cht10
+test/test_cht10.cpp)
+target_link_libraries(test_cht10 cht10)
+
+#add_executable(test_scan
+#  test/test_scan.cpp
+#)
+#target_link_libraries(test_scan cht10)
+
+#add_executable(test_range
+#  test/test_range.cpp
+#)
+#target_link_libraries(test_range cht10)
+
+## Install
 install(DIRECTORY include/
   DESTINATION include
 )
@@ -42,7 +59,7 @@ install(TARGETS cht10
   RUNTIME DESTINATION bin
 )
 
-install(TARGETS cht10_node_ros 
+install(TARGETS cht10_node_ros test_cht10
   DESTINATION lib/${PROJECT_NAME}
 )
 

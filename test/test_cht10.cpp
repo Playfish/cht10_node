@@ -1,5 +1,5 @@
 #include <string>
-#include <cht10_node/seiral_func.hpp>
+#include <cht10_node/serial_func.hpp>
 #include <cstdlib>
 
 #include <iostream>
@@ -7,7 +7,7 @@
 #define BUFSIZE 17
 
 int main(int argc, char** argv){
-  cht10_seiral_func::Cht10Driver cht10driver_;
+  cht10_serial_func::Cht10Driver cht10driver_;
 
   std::string serialNumber_;
   serialNumber_ = "/dev/ttyUSB0";
@@ -17,7 +17,7 @@ int main(int argc, char** argv){
   int fd, len, rcv_cnt;
   bool success_flag;
   char buf[40], temp_buf[BUFSIZE],result_buf[BUFSIZE];
-  int laser_data=0;
+  unsigned int laser_data=0;
   char data_buf[4];
   rcv_cnt = 0;
   success_flag = false;
