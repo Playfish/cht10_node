@@ -1,78 +1,59 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(cht10_node)
 
-find_package(catkin REQUIRED COMPONENTS nodelet roscpp std_msgs sensor_msgs pluginlib ecl_threads)
-find_package(Boost REQUIRED)
+if(NOT WIN32)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra -Wpedantic")
+endif()
 
-catkin_package(
-  INCLUDE_DIRS
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS nodelet roscpp std_msgs pluginlib ecl_threads sensor_msgs
-  DEPENDS Boost 
-)
+find_package(ament_cmake_ros REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rmw REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+#find_package(ecl_threads REQUIRED)
+# COMPONENTS nodelet roscpp std_msgs sensor_msgs pluginlib ecl_threads)
 
-###########
-## Build ##
-###########
+include_directories(include)
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-)
-
-## Declare a cpp library
-add_library(${PROJECT_NAME} src/cht10_node.cpp)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+add_library(cht10 src/cht10_node.cpp)
+ament_target_dependencies(cht10
+  "rclcpp"
+  "sensor_msgs"
+  "std_msgs"
 )
 
-##Test
-add_executable(test_cht10
-  test/test_cht10.cpp
+add_executable(cht10_node_ros src/cht10_node_ros.cpp)
+ament_target_dependencies(cht10_node_ros
+  "rclcpp"
+  "sensor_msgs"
+  "std_msgs"
 )
-target_link_libraries(test_cht10
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
-add_executable(test_scan
-  test/test_scan.cpp
-)
-target_link_libraries(test_scan
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
-add_executable(test_range
-  test/test_range.cpp
-)
-target_link_libraries(test_range
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
-#############
-## Install ##
-#############
+target_link_libraries(cht10_node_ros cht10)
 
-## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} 
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(DIRECTORY include/
+  DESTINATION include
 )
 
-## Mark all other required files for installation
-
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(TARGETS cht10
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(TARGETS cht10_node_ros 
+  DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY plugins rviz
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+if(BUILD_TESTING)
 
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependcies()
+
+  find_package(ament_cmake_pytest REQUIRED)
+  find_package(rmw_implementation_cmake REQUIRED)
+
+endif()
+ament_export_include_directories(include)
+ament_package()

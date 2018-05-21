@@ -1,8 +1,0 @@
-<library path="lib/libcht10_node">
-  <class name="cht10_seiral_func/Cht10Func" type="cht10_seiral_func::Cht10Func" base_class_type="nodelet::Nodelet">
-    <description>
-      Drivers for cht10.
-    </description>
-  </class>
-</library>
-

@@ -1,5 +1,5 @@
 /**
- * @file /Cht10_serial_func/src/Cht10_serial_func.cpp
+ * @file /cht10_node/src/cht10/cht10_node.cpp
  *
  * @brief Implementation for dirver with read data from Cht10 nodelet
  *
@@ -10,89 +10,91 @@
 /*****************************************************************************
  ** Includes
  *****************************************************************************/
+#include <chrono>
+#include <cstdio>
+#include <memory>
 #include <string>
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <nodelet/nodelet.h>
-#include <ecl/threads/thread.hpp>
-#include <sensor_msgs/LaserScan.h>  
-#include <sensor_msgs/Range.h>  
-#include <pluginlib/class_list_macros.h>
-#include <cht10_node/seiral_func.hpp>
 
+#include <rclcpp/rclcpp.hpp>
+#include <rcutils/logging_macros.h>
 
-namespace cht10_seiral_func{
+#include <functional>
 
-class Cht10Func : public nodelet::Nodelet{
-#define BUFSIZE 17
-#define SCALE 1000
+#include <std_msgs/msg/string.hpp>
+#include <sensor_msgs/msg/range.hpp>
 
-public:
-  Cht10Func() : shutdown_requested_(false),serialNumber_("/dev/USB0"),frame_id("laser"){}
+#include <cht10_node/cht10_node.h>
 
-  ~Cht10Func(){
-    NODELET_DEBUG_STREAM("Waiting for update thread to finish.");
-    shutdown_requested_ = true;
-    update_thread_.join();
-  }
+#define ROS_ERROR RCUTILS_LOG_ERROR
+#define ROS_INFO RCUTILS_LOG_INFO
+#define ROS_ERROR_THROTTLE(sec, ...) RCUTILS_LOG_ERROR_THROTTLE(RCUTILS_STEADY_TIME, sec, __VA_ARGS__)
 
-  virtual void onInit(){
+using namespace cht10_serial_func;
 
-    ros::NodeHandle nh = this->getPrivateNodeHandle();
-    std::string name = nh.getUnresolvedNamespace();
-    nh.getParam("serialNumber", serialNumber_);
-    nh.getParam("baudRate", baudRate_);
-    nh.getParam("frame_id", frame_id);
+  Cht10Func::Cht10Func(rclcpp::Node::SharedPtr & node):node_(node), 
+serialNumber_("/dev/USB0"),
+frame_id("laser"){
+
+    msg_ = std::make_shared<sensor_msgs::msg::Range>();
+
+    scan_pub_ = node_->create_publisher<sensor_msgs::msg::Range>("range");
+
+    parameter_service_ = std::make_shared<rclcpp::ParameterService>(node_);
+
+    node_->get_parameter("serialNumber", serialNumber_);
+    node_->get_parameter("baudRate", baudRate_);
+    node_->get_parameter("frame_id", frame_id);
+
     rcv_cnt = 0;
     success_flag = 0;
 
     fd = open(serialNumber_.c_str(), O_RDWR | O_NOCTTY | O_NDELAY );
     if(fd < 0){
-      ROS_ERROR_STREAM("Open Serial: "<<serialNumber_.c_str()<<" Error!");
+      ROS_ERROR("Open Serial: %s Error!",serialNumber_.c_str());
       exit(0);
     }
 
-    int countSeq=0;
-    scan_pub = nh.advertise<sensor_msgs::Range>("range",100);
     memset(buf, 0, sizeof(buf));
     memset(temp_buf, 0, sizeof(temp_buf));
     memset(result_buf, 0, sizeof(result_buf));
     Cht10driver_.UART0_Init(fd,baudRate_,0,8,1,'N');
-    ROS_INFO_STREAM("Open serial: ["<< serialNumber_.c_str() <<" ] successful, with idex: "<<fd<<".");
-    NODELET_INFO_STREAM("Cht10Func initialised. Spinning up update thread ... [" << name << "]");
-    update_thread_.start(&Cht10Func::update, *this);
+    ROS_INFO("Open serial: [ %s ], successfully, with idex: %d.", serialNumber_.c_str() ,fd);
+
+    update();
   }
 
-  double data_to_meters(int &data, int scale){
+  Cht10Func::~Cht10Func(){
+  }
+
+  double Cht10Func::data_to_meters(unsigned int &data, int scale){
     return (double)data/scale;
   }
 
-  void publish_scan(ros::Publisher *pub,
-                    double nodes, ros::Time start,
+  void Cht10Func::publish_scan(double nodes, builtin_interfaces::msg::Time start,
                     std::string frame_id){
 
     float final_range;
-    sensor_msgs::Range range_msg;
-    range_msg.field_of_view = 0.05235988;
-    range_msg.max_range = 10.0;
-    range_msg.min_range = 0.05;
-    range_msg.header.frame_id = frame_id;
-    range_msg.radiation_type = sensor_msgs::Range::INFRARED;
-    if(nodes > range_msg.max_range){
+    std::shared_ptr<sensor_msgs::msg::Range> range_msg;
+    range_msg->field_of_view = 0.05235988;
+    range_msg->max_range = 10.0;
+    range_msg->min_range = 0.05;
+    range_msg->header.frame_id = frame_id;
+    range_msg->radiation_type = sensor_msgs::msg::Range::INFRARED;
+    if(nodes > range_msg->max_range){
       final_range = std::numeric_limits<float>::infinity();
-    }else if(nodes < range_msg.min_range){
+    }else if(nodes < range_msg->min_range){
       final_range = -std::numeric_limits<float>::infinity();
     }else{
       final_range = nodes;
     }
-    range_msg.header.stamp = start;
-    range_msg.header.seq = countSeq;
-    range_msg.range = final_range;
-    scan_pub.publish(range_msg);
+    range_msg->header.stamp = start;
+    range_msg->range = final_range;
+
+    scan_pub_->publish(range_msg);
 
   }
 
-  bool get_scan_data(){
+  bool Cht10Func::get_scan_data(){
     len = Cht10driver_.UART0_Recv(fd, buf,40);
     if(len>0){
       for(int i = 0; i < len; i++){
@@ -124,56 +126,36 @@ public:
         }//end else
       }//end for    
     }
+    return success_flag;
   }
-private:
-  void update(){
+
+  void Cht10Func::update(){
     rcv_cnt = 0;
     success_flag = 0;
     laser_data = 0;
-    ros::Rate spin_rate(50);
     memset(buf, 0, sizeof(buf));
     memset(temp_buf, 0, sizeof(temp_buf));
     memset(result_buf, 0, sizeof(result_buf));
-    ROS_INFO_STREAM("Begin receive data from "<<serialNumber_.c_str()<<", with idex:"<<fd<<".");
+    ROS_INFO("Begin receive data from %s, with idex: %d.",serialNumber_.c_str(),fd);
     fd = open(serialNumber_.c_str(), O_RDWR | O_NOCTTY | O_NDELAY );
     Cht10driver_.UART0_Init(fd,baudRate_,0,8,1,'N');
-    while (! shutdown_requested_ && ros::ok())
-    {
-      start_scan_time = ros::Time::now();
-      success_flag = get_scan_data();
+    // Create a function for when messages are to be sent.
+    auto publish_message =
+      [this]() -> void
+      {
+//        start_scan_time = 
+        rclcpp::Time(start_scan_time);
+        success_flag = get_scan_data();
           
-      //Send data
-      publish_scan(&scan_pub, data_to_meters(laser_data,SCALE),
-                       start_scan_time, frame_id);
-      spin_rate.sleep();
+        //Send data
+        publish_scan(data_to_meters(laser_data,SCALE),
+                         start_scan_time, frame_id);
+        countSeq++;
+      };
 
-      countSeq++;
-    }
-
-    ROS_INFO_STREAM("Shotdown and close serial: "<<serialNumber_.c_str()<<".");
+    ROS_INFO("Shotdown and close serial: %s.", serialNumber_.c_str());
     Cht10driver_.UART0_Close(fd);
+
+    // Use a timer to schedule periodic message publishing.
+    timer_ = node_->create_wall_timer(300ms, publish_message);
   }
-private:
-  int fd, len, rcv_cnt;
-  int success_flag;
-  char buf[40], temp_buf[BUFSIZE],result_buf[BUFSIZE];
-  
-  Cht10Driver Cht10driver_;
-  ecl::Thread update_thread_;
-  bool shutdown_requested_;
-  ros::Publisher scan_pub;
-  int laser_data;
-  char data_buf[4];
-  // ROS Parameters
-  std::string serialNumber_;
-  int baudRate_;
-  int countSeq;
-  
-  std::string frame_id;
-
-  ros::Time start_scan_time;
-};
-
-} //namespace Cht10_serial_func
-PLUGINLIB_EXPORT_CLASS(cht10_seiral_func::Cht10Func,
-                        nodelet::Nodelet);

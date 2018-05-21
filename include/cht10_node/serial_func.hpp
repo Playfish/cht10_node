@@ -1,9 +1,9 @@
 /**
- * @file /dumpbot_seiral_func/include/dumpbot_seiral_func/dumpbot_seiral_func.hpp
+ * @file /cht10_node/include/cht10_node/serial_func.hpp
  *
- * @brief Serial data get from dumpbot.
+ * @brief Serial data get from MCU.
  *
- * This package just read data from dumpbot and dump out.
+ * This package just read data from MCU.
  *
  * @author Carl
  *
@@ -36,7 +36,7 @@
 //宏定义  
 #define FALSE  -1  
 #define TRUE   0  
-namespace cht10_seiral_func{
+namespace cht10_serial_func{
 using namespace std;
 /**
  * @ brief Driver of dumpbot for reading data.
@@ -49,10 +49,9 @@ public:
 	void UART0_Close(int fd){  
 	  close(fd);  
 	}  
-	int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity){  
+	int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity='N'){  
      
       int   i;  
-      int   status;  
       int   speed_arr[] = { B115200, B19200, B9600, B4800, B2400, B1200, B300};  
       int   name_arr[] = {115200,  19200,  9600,  4800,  2400,  1200,  300};  
            
@@ -184,10 +183,9 @@ public:
 	*                       
 	* 出口参数：        正确返回为1，错误返回为0 
 	*******************************************************************/  
-	int UART0_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity){  
-	  int err;  
+	int UART0_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity ='N'){  
 	  //设置串口数据帧格式  
-  	  if (UART0_Set(fd,speed,flow_ctrl,databits,stopbits,'N') == FALSE){                                                           
+  	  if (UART0_Set(fd,speed,flow_ctrl,databits,stopbits,parity) == FALSE){                                                           
         return FALSE;  
        }  
       else{  
