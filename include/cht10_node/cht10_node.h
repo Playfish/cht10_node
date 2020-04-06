@@ -66,7 +66,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // ROS Parameters
-  rclcpp::ParameterService::SharedPtr parameter_service_;
+  //rclcpp::ParameterService::SharedPtr parameter_service_;
   std::string serialNumber_;
   int baudRate_;
   int countSeq;

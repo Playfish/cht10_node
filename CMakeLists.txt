@@ -63,14 +63,14 @@ install(TARGETS cht10_node_ros test_cht10
   DESTINATION lib/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
-
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependcies()
-
-  find_package(ament_cmake_pytest REQUIRED)
-  find_package(rmw_implementation_cmake REQUIRED)
-
-endif()
+#if(BUILD_TESTING)
+#
+#  find_package(ament_lint_auto REQUIRED)
+#  ament_lint_auto_find_test_dependcies()
+#
+#  find_package(ament_cmake_pytest REQUIRED)
+#  find_package(rmw_implementation_cmake REQUIRED)
+#
+#endif()
 ament_export_include_directories(include)
 ament_package()
