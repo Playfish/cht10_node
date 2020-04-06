@@ -32,14 +32,16 @@
 using namespace cht10_serial_func;
 
   Cht10Func::Cht10Func(rclcpp::Node::SharedPtr & node):node_(node), 
-serialNumber_("/dev/USB0"),
+serialNumber_("/dev/ttyUSB0"),
 frame_id("laser"){
 
     msg_ = std::make_shared<sensor_msgs::msg::Range>();
 
-    scan_pub_ = node_->create_publisher<sensor_msgs::msg::Range>("range");
+    scan_pub_ = node_->create_publisher<sensor_msgs::msg::Range>("range",10);
+     // scan_pub_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
+ 
 
-    parameter_service_ = std::make_shared<rclcpp::ParameterService>(node_);
+   // parameter_service_ = std::make_shared<rclcpp::ParameterService>(node_);
 
     node_->get_parameter("serialNumber", serialNumber_);
     node_->get_parameter("baudRate", baudRate_);
@@ -75,6 +77,7 @@ frame_id("laser"){
 
     float final_range;
     std::shared_ptr<sensor_msgs::msg::Range> range_msg;
+    
     range_msg->field_of_view = 0.05235988;
     range_msg->max_range = 10.0;
     range_msg->min_range = 0.05;
@@ -90,7 +93,17 @@ frame_id("laser"){
     range_msg->header.stamp = start;
     range_msg->range = final_range;
 
-    scan_pub_->publish(range_msg);
+    //scan_pub_->publish(range_msg);
+
+
+    auto message = sensor_msgs::msg::Range();
+
+
+    //message.field_of_view = "Hello, world testing! " + std::to_string(count_++);
+    //RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+    scan_pub_->publish(message);
+
+
 
   }
 
